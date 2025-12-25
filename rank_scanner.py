@@ -6,11 +6,12 @@ import numpy as np
 import re
 import threading
 import time
+from PIL import ImageChops
 
 class ModernRankScanner:
     def __init__(self, root):
         self.root = root
-        self.root.title("줘팸터 순위 분석기 Pro")
+        self.root.title("줘팸터 등반 순위 계산기")
         self.root.geometry("400x520")
         self.root.configure(bg="#F8F9FA")  # 전체 배경색
         self.root.attributes("-topmost", True)
@@ -34,7 +35,7 @@ class ModernRankScanner:
         # 1. 헤더 섹션
         header = tk.Frame(self.root, bg="#4A90E2", height=80)
         header.pack(fill="x")
-        tk.Label(header, text="🏆 줘팸터 순위 분석기", font=self.title_font, fg="white", bg="#4A90E2").pack(pady=20)
+        tk.Label(header, text="🏆 줘팸터 등반 순위 계산기", font=self.title_font, fg="white", bg="#4A90E2").pack(pady=20)
 
         # 2. 메인 컨텐츠 (카드 레이아웃)
         content = tk.Frame(self.root, bg="#F8F9FA", padx=20, pady=20)
@@ -73,7 +74,7 @@ class ModernRankScanner:
         self.target_display.pack(pady=5)
 
         # 3. 푸터
-        footer = tk.Label(self.root, text="Designed by 코딩 파트너", font=("Arial", 8), fg="#C0C4CC", bg="#F8F9FA")
+        footer = tk.Label(self.root, text="줘팸터 등반 순위 계산기", font=("Arial", 8), fg="#C0C4CC", bg="#F8F9FA")
         footer.pack(side="bottom", pady=10)
 
     # --- 기능 로직 ---
@@ -110,12 +111,28 @@ class ModernRankScanner:
         return f"{target} 위"
 
     def scan_loop(self):
+        last_img = None # 이전 스크린샷 저장용
+        
         while self.running:
             if self.scan_region:
                 try:
-                    screenshot = pyautogui.screenshot(region=self.scan_region)
-                    img_np = np.array(screenshot)
+                    # 1. 현재 영역 캡처
+                    current_img = pyautogui.screenshot(region=self.scan_region)
+                    
+                    # 2. 화면 변화 체크 (최적화 핵심)
+                    if last_img is not None:
+                        # 두 이미지의 차이를 계산
+                        diff = ImageChops.difference(current_img, last_img)
+                        # 차이가 거의 없다면(bbox가 None이면 동일한 이미지) 루프 건너뛰기
+                        if diff.getbbox() is None:
+                            time.sleep(2) # 변화 없으면 좀 더 오래 대기
+                            continue
+                    
+                    # 3. 변화가 있을 때만 무거운 OCR 실행
+                    last_img = current_img # 현재 이미지를 이전 이미지로 저장
+                    img_np = np.array(current_img)
                     results = self.reader.readtext(img_np)
+                    
                     combined_text = " ".join([res[1] for res in results])
                     
                     if "없음" in combined_text:
@@ -129,9 +146,11 @@ class ModernRankScanner:
                         rank_text = "순위 없음" if current_rank == 3001 else f"{current_rank} 위"
                         self.rank_display.config(text=rank_text)
                         self.target_display.config(text=self.calculate_max_challenge(current_rank))
-                except:
-                    pass
-            time.sleep(1.2)
+                        
+                except Exception as e:
+                    print(f"스캔 중 오류: {e}")
+            
+            time.sleep(2) # 기본 대기 시간을 2초로 상향
 
     def toggle_scan(self):
         if not self.running:

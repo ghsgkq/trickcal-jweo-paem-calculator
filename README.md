@@ -1,5 +1,5 @@
 
-# 🏆 줘팸터 실시간 순위 분석기 (Jweo Paem Rank Scanner)
+# 🏆 줘팸터 실시간 등반 순위 계산기 (Jweo Paem Rank Scanner)
 
 ![image](readme01.png)
 
