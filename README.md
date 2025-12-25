@@ -28,21 +28,27 @@
 
 ```bash
 pip install -r requirements.txt
-
 ```
 
 ### 2. 실행 방법
 
 ```bash
-python main.py
-
+python rank_scanner.py
 ```
+
+### option. 실행 파일(.exe) 생성하기
+PyInstaller를 사용하여 단일 실행 파일을 빌드합니다.
+
+```bash
+pyinstaller --noconsole --onefile --name "Trickcal_Jweo_Paem_Calculator" rank_scanner.py
+```
+빌드가 완료되면 dist 폴더 안에 Trickcal_Rank_Scanner.exe 파일이 생성됩니다.
 
 ## 📦 기술 스택
 
 * **AI Thought Partner:** Google Gemini
 * **Language:** Python 3.8+
-* **Library:** EasyOCR, PyAutoGUI, NumPy, Pillow, Tkinter
+* **Library:** EasyOCR, PyAutoGUI, NumPy, Pillow, Tkinter, PyInstaller
 
 ## 🤝 기여 및 출처
 

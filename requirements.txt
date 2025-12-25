@@ -1,3 +1,4 @@
+altgraph==0.17.5
 easyocr==1.7.2
 filelock==3.20.1
 fsspec==2025.12.0
@@ -12,10 +13,13 @@ ninja==1.13.0
 numpy==2.2.6
 opencv-python-headless==4.12.0.88
 packaging==25.0
+pefile==2024.8.26
 pillow==12.0.0
 PyAutoGUI==0.9.54
 pyclipper==1.4.0
 PyGetWindow==0.0.9
+pyinstaller==6.17.0
+pyinstaller-hooks-contrib==2025.11
 PyMsgBox==2.0.1
 pyperclip==1.11.0
 PyRect==0.2.0
@@ -23,6 +27,7 @@ PyScreeze==1.0.1
 pytesseract==0.3.13
 python-bidi==0.6.7
 pytweening==1.2.0
+pywin32-ctypes==0.2.3
 PyYAML==6.0.3
 scikit-image==0.26.0
 scipy==1.16.3
