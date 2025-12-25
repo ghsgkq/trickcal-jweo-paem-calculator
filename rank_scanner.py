@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import font
 import pyautogui
 import easyocr
 import numpy as np
@@ -6,41 +7,76 @@ import re
 import threading
 import time
 
-class SimpleRankScanner:
+class ModernRankScanner:
     def __init__(self, root):
         self.root = root
-        self.root.title("줘팸터 최적화 계산기")
-        self.root.geometry("400x400")
+        self.root.title("줘팸터 순위 분석기 Pro")
+        self.root.geometry("400x520")
+        self.root.configure(bg="#F8F9FA")  # 전체 배경색
         self.root.attributes("-topmost", True)
 
-        # OCR 로딩
-        print("OCR 모델을 로딩 중입니다...")
-        self.reader = easyocr.Reader(['ko', 'en'])
+        # 폰트 설정
+        self.title_font = font.Font(family="Malgun Gothic", size=16, weight="bold")
+        self.label_font = font.Font(family="Malgun Gothic", size=10)
+        self.result_font = font.Font(family="Malgun Gothic", size=22, weight="bold")
         
+        # OCR 초기화
+        self.reader = easyocr.Reader(['ko', 'en'])
         self.running = False
         self.scan_region = None
         self.last_rank = -1
 
-        # GUI 구성
-        tk.Label(root, text="⚔️ 줘팸터 즉시 도전 순위", font=("Arial", 16, "bold")).pack(pady=15)
+        self.setup_ui()
+
+    def setup_ui(self):
+        """UI 구성 요소를 배치합니다."""
         
-        self.btn_select = tk.Button(root, text="영역 선택 (드래그)", command=self.start_region_selection, width=20, bg="#f39c12", fg="white")
-        self.btn_select.pack(pady=5)
+        # 1. 헤더 섹션
+        header = tk.Frame(self.root, bg="#4A90E2", height=80)
+        header.pack(fill="x")
+        tk.Label(header, text="🏆 줘팸터 순위 분석기", font=self.title_font, fg="white", bg="#4A90E2").pack(pady=20)
 
-        self.btn_toggle = tk.Button(root, text="실시간 스캔 시작", command=self.toggle_scan, width=20, bg="#3498db", fg="white", state=tk.DISABLED)
-        self.btn_toggle.pack(pady=5)
+        # 2. 메인 컨텐츠 (카드 레이아웃)
+        content = tk.Frame(self.root, bg="#F8F9FA", padx=20, pady=20)
+        content.pack(fill="both", expand=True)
 
-        self.status_label = tk.Label(root, text="영역을 먼저 지정해 주세요.", fg="gray")
-        self.status_label.pack(pady=10)
+        # 컨트롤 버튼
+        btn_frame = tk.Frame(content, bg="#F8F9FA")
+        btn_frame.pack(fill="x", pady=10)
 
-        # 결과 표시 (크고 명확하게)
-        self.rank_display = tk.Label(root, text="- 위", font=("Arial", 20, "bold"), fg="#2c3e50")
-        self.rank_display.pack(pady=10)
+        self.btn_select = tk.Button(btn_frame, text="📍 영역 선택하기", command=self.start_region_selection, 
+                                   font=self.label_font, bg="#FFFFFF", fg="#333333", relief="flat", 
+                                   highlightthickness=1, highlightbackground="#DCDFE6", cursor="hand2", width=15)
+        self.btn_select.pack(side="left", padx=5, expand=True, fill="x")
 
-        self.result_display = tk.Label(root, text="도전 가능 순위 대기 중", font=("Arial", 14), fg="#e74c3c")
-        self.result_display.pack(pady=10)
+        self.btn_toggle = tk.Button(btn_frame, text="▶ 스캔 시작", command=self.toggle_scan, 
+                                   font=self.label_font, bg="#FFFFFF", fg="#333333", relief="flat", 
+                                   highlightthickness=1, highlightbackground="#DCDFE6", cursor="hand2", width=15, state=tk.DISABLED)
+        self.btn_toggle.pack(side="left", padx=5, expand=True, fill="x")
 
-    # --- 영역 선택 로직 ---
+        # 상태 안내
+        self.status_label = tk.Label(content, text="영역을 먼저 지정해 주세요.", font=self.label_font, fg="#909399", bg="#F8F9FA")
+        self.status_label.pack(pady=5)
+
+        # --- 인식 결과 카드 ---
+        result_card = tk.Frame(content, bg="#FFFFFF", highlightthickness=1, highlightbackground="#EBEEF5", padx=15, pady=20)
+        result_card.pack(fill="both", expand=True, pady=10)
+
+        tk.Label(result_card, text="현재 내 순위", font=self.label_font, fg="#606266", bg="#FFFFFF").pack()
+        self.rank_display = tk.Label(result_card, text="- 위", font=self.result_font, fg="#303133", bg="#FFFFFF")
+        self.rank_display.pack(pady=5)
+
+        tk.Canvas(result_card, height=1, bg="#EBEEF5", highlightthickness=0).pack(fill="x", pady=15)
+
+        tk.Label(result_card, text="도전 가능 순위", font=self.label_font, fg="#606266", bg="#FFFFFF").pack()
+        self.target_display = tk.Label(result_card, text="준비 완료", font=self.result_font, fg="#E74C3C", bg="#FFFFFF")
+        self.target_display.pack(pady=5)
+
+        # 3. 푸터
+        footer = tk.Label(self.root, text="Designed by 코딩 파트너", font=("Arial", 8), fg="#C0C4CC", bg="#F8F9FA")
+        footer.pack(side="bottom", pady=10)
+
+    # --- 기능 로직 ---
     def start_region_selection(self):
         self.selection_window = tk.Toplevel(self.root)
         self.selection_window.attributes("-alpha", 0.3, "-fullscreen", True, "-topmost", True)
@@ -53,7 +89,7 @@ class SimpleRankScanner:
 
     def on_button_press(self, event):
         self.start_x, self.start_y = event.x, event.y
-        self.rect = self.canvas.create_rectangle(self.start_x, self.start_y, 1, 1, outline='red', width=3)
+        self.rect = self.canvas.create_rectangle(self.start_x, self.start_y, 1, 1, outline='#4A90E2', width=3)
 
     def on_move_press(self, event):
         self.canvas.coords(self.rect, self.start_x, self.start_y, event.x, event.y)
@@ -63,20 +99,15 @@ class SimpleRankScanner:
         w, h = abs(self.start_x - event.x), abs(self.start_y - event.y)
         self.scan_region = (x, y, w, h)
         self.selection_window.destroy()
-        self.status_label.config(text="영역 설정 완료! 스캔을 시작하세요.", fg="green")
-        self.btn_toggle.config(state=tk.NORMAL)
+        self.status_label.config(text="✅ 영역 설정이 완료되었습니다.", fg="#67C23A")
+        self.btn_toggle.config(state=tk.NORMAL, bg="#67C23A", fg="white")
 
-    # --- 계산 로직 ---
     def calculate_max_challenge(self, rank):
-        if rank >= 100:
-            # 100위 이상: 92% 적용
-            target = int(rank * 0.92)
-            return f"최대 {target}위 까지 도전 가능"
-        else:
-            # 1~99위: 35% 적용
-            target = int(rank * 0.35)
-            if target < 1: target = 1
-            return f"최대 {target}위 까지 도전 가능"
+        # 표 기준 공식: 100위 이상 92%, 99위 이하 35%
+        ratio = 0.92 if rank >= 100 else 0.35
+        target = int(rank * ratio)
+        if target < 1: target = 1
+        return f"{target} 위"
 
     def scan_loop(self):
         while self.running:
@@ -95,8 +126,9 @@ class SimpleRankScanner:
 
                     if current_rank and current_rank != self.last_rank:
                         self.last_rank = current_rank
-                        self.rank_display.config(text=f"현재: {current_rank if current_rank != 3001 else '순위 없음'}")
-                        self.result_display.config(text=self.calculate_max_challenge(current_rank))
+                        rank_text = "순위 없음" if current_rank == 3001 else f"{current_rank} 위"
+                        self.rank_display.config(text=rank_text)
+                        self.target_display.config(text=self.calculate_max_challenge(current_rank))
                 except:
                     pass
             time.sleep(1.2)
@@ -104,13 +136,15 @@ class SimpleRankScanner:
     def toggle_scan(self):
         if not self.running:
             self.running = True
-            self.btn_toggle.config(text="스캔 중지", bg="#e67e22")
+            self.btn_toggle.config(text="⏹ 스캔 중지", bg="#F56C6C")
+            self.status_label.config(text="🔍 실시간으로 순위를 추적 중입니다...", fg="#4A90E2")
             threading.Thread(target=self.scan_loop, daemon=True).start()
         else:
             self.running = False
-            self.btn_toggle.config(text="실시간 스캔 시작", bg="#3498db")
+            self.btn_toggle.config(text="▶ 스캔 재개", bg="#67C23A")
+            self.status_label.config(text="⏸ 스캔이 일시 중지되었습니다.", fg="#E6A23C")
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = SimpleRankScanner(root)
+    app = ModernRankScanner(root)
     root.mainloop()
